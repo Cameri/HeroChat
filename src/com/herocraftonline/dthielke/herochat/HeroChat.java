@@ -125,7 +125,8 @@ public class HeroChat extends JavaPlugin {
         conversationManager = new ConversationManager();
         permissionManager = new PermissionManager();
         // And for superperms
-        permissionManager.registerPermissions(this);
+        if(getServer().getPluginManager().getPermission("herochat.*") == null)
+        	permissionManager.registerPermissions(this);
         registerEvents();
         registerCommands();
 
