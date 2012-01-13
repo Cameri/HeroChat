@@ -9,26 +9,49 @@
 package com.herocraftonline.dthielke.herochat.util;
 
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
 
-import com.nijiko.permissions.Group;
-import com.nijiko.permissions.PermissionHandler;
+import de.bananaco.bpermissions.api.Group;
+import de.bananaco.bpermissions.api.WorldManager;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PermissionManager {
 
-    private PermissionHandler security;
-
-    public PermissionManager(PermissionHandler security) {
-        this.security = security;
+    private WorldManager wm = null;
+    
+    public PermissionManager() {
+        try {
+        	 wm = WorldManager.getInstance();
+        } catch (Exception e) {
+        	System.err.println("bPermissions not detected");
+        }
+    }
+    
+    public void registerPermissions(JavaPlugin herochat) {
+    	PluginManager pm = herochat.getServer().getPluginManager();
+    	Map<String, Boolean> children = new HashMap<String, Boolean>();
+    	children.put("herochat.admin", true);
+    	children.put("herochat.create", true);
+    	children.put("herochat.color", true);
+    	Permission permission = new Permission("herochat.*", PermissionDefault.OP, children);
+    	// Boo superperms
+    	pm.addPermission(permission);
     }
 
     public String[] getGroups(Player p) {
-        if (security != null) {
+        if (wm != null) {
             try {
             String world = p.getWorld().getName();
             String name = p.getName();
-            return security.getGroups(world, name);
+            Set<String> groups = wm.getWorld(world).getUser(name).getGroupsAsString();
+            return groups.toArray(new String[groups.size()]);
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
@@ -45,11 +68,14 @@ public class PermissionManager {
     }
 
     public String getGroup(Player p) {
-        if (security != null) {
+        if (wm != null) {
             try {
-            String world = p.getWorld().getName();
-            String name = p.getName();
-            String group = security.getPrimaryGroup(world, name);
+            String group = null;
+            String[] groups = getGroups(p);
+            
+            if(groups.length > 0)
+            	group = groups[0];
+            
             if (group == null) {
                 group = "";
             }
@@ -64,15 +90,15 @@ public class PermissionManager {
     }
 
     public String getGroupPrefix(Player p) {
-        if (security != null) {
+        if (wm != null) {
             try {
                 String[] groups = getGroups(p);
                 for (int i = 0; i < groups.length; i++) {
-                    Group group = security.getGroupObject(p.getWorld().getName(), groups[i]);
-                    if (group != null) {
-                        if (group.getPrefix() != null)
-                            return group.getPrefix().replaceAll("&([0-9a-f])", "§$1");
-                    }
+                    String world = p.getWorld().getName();
+                    Group group = wm.getWorld(world).getGroup(groups[i]);
+                    
+                    if (!group.getEffectiveValue("prefix").equals(""))
+                            return group.getEffectiveValue("prefix").replaceAll("&([0-9a-f])", "§$1");
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -82,15 +108,14 @@ public class PermissionManager {
     }
     
     public String getGroupSuffix(Player p) {
-        if (security != null) {
+        if (wm != null) {
             try {
                 String[] groups = getGroups(p);
                 for (int i = 0; i < groups.length; i++) {
-                    Group group = security.getGroupObject(p.getWorld().getName(), groups[i]);
-                    if (group != null) {
-                        if (group.getSuffix() != null)
-                            return group.getSuffix().replaceAll("&([0-9a-f])", "§$1");
-                    }
+                	String world = p.getWorld().getName();
+                    Group group = wm.getWorld(world).getGroup(groups[i]);
+                    if (!group.getEffectiveValue("prefix").equals(""))
+                        return group.getEffectiveValue("prefix").replaceAll("&([0-9a-f])", "§$1");
                 }
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -100,11 +125,11 @@ public class PermissionManager {
     }
 
     public String getPrefix(Player p) {
-        if (security != null) {
+        if (wm != null) {
             try {
                 String world = p.getWorld().getName();
                 String name = p.getName();
-                String prefix = security.getUserPrefix(world, name);
+                String prefix = wm.getWorld(world).getUser(name).getEffectiveValue("prefix");
                 return prefix.replaceAll("&([0-9a-f])", "§$1");
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -116,11 +141,11 @@ public class PermissionManager {
     }
 
     public String getSuffix(Player p) {
-        if (security != null) {
+        if (wm != null) {
             try {
                 String world = p.getWorld().getName();
                 String name = p.getName();
-                String suffix = security.getUserSuffix(world, name);
+                String suffix = wm.getWorld(world).getUser(name).getEffectiveValue("suffix");
                 return suffix.replaceAll("&([0-9a-f])", "§$1");
             } catch (Exception e) {
                 System.out.println(e.getMessage());
@@ -132,29 +157,17 @@ public class PermissionManager {
     }
 
     public boolean isAdmin(Player p) {
-        if (security != null) {
-            return security.has(p, "herochat.admin");
-        } else {
-            return true;
-        }
+        return p.hasPermission("herochat.admin");
     }
 
     public boolean isAllowedColor(Player p) {
-        if (security != null) {
-            return security.has(p, "herochat.color");
-        } else {
-            return true;
-        }
+            return p.hasPermission("herochat.color");
     }
 
     public boolean canCreate(Player p) {
-        if (security != null) {
-            boolean admin = security.has(p, "herochat.admin");
-            boolean create = security.has(p, "herochat.create");
+            boolean admin = p.hasPermission("herochat.admin");
+            boolean create = p.hasPermission("herochat.create");
             return admin || create;
-        } else {
-            return true;
-        }
     }
 
 }

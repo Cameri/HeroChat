@@ -9,20 +9,20 @@
 package com.herocraftonline.dthielke.herochat;
 
 import org.bukkit.event.CustomEventListener;
-import org.bukkit.event.Event;
+//import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
 
-import com.ensifera.animosity.craftirc.IRCEvent;
-import com.herocraftonline.dthielke.herochat.channels.Channel;
+//import com.herocraftonline.dthielke.herochat.channels.Channel;
 
 public class HeroChatCraftIRCListener extends CustomEventListener implements Listener {
 
-    private HeroChat plugin;
+    //private HeroChat plugin;
 
     public HeroChatCraftIRCListener(HeroChat plugin) {
-        this.plugin = plugin;
+        //this.plugin = plugin;
     }
 
+    /*
     @Override
     public void onCustomEvent(Event event) {
         if (event instanceof IRCEvent) {
@@ -77,5 +77,6 @@ public class HeroChatCraftIRCListener extends CustomEventListener implements Lis
             }
         }
     }
+    */
 
 }

@@ -14,7 +14,7 @@ import java.util.List;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Type;
 
-import com.ensifera.animosity.craftirc.CraftIRC;
+//import com.ensifera.animosity.craftirc.CraftIRC;
 import com.herocraftonline.dthielke.herochat.HeroChat;
 import com.herocraftonline.dthielke.herochat.HeroChat.ChatColor;
 import com.herocraftonline.dthielke.herochat.event.ChannelChatEvent;
@@ -156,15 +156,16 @@ public class Channel {
         }
         plugin.logChat(formattedMsg);
     }
-
+    
+    // TODO Re-implement this somehow
     protected void sendIRCMessage(String source, String msg) {
-        CraftIRC irc = plugin.getCraftIRC();
-        if (irc != null) {
-            String ircMsg = Messaging.format(plugin, this, plugin.getIrcMessageFormat(), source, "", msg, true, false);
-            for (String tag : gameToIRCTags) {
-                plugin.getCraftIRC().sendMessageToTag(ircMsg, tag);
-            }
-        }
+        //CraftIRC irc = plugin.getCraftIRC();
+        //if (irc != null) {
+            //String ircMsg = Messaging.format(plugin, this, plugin.getIrcMessageFormat(), source, "", msg, true, false);
+            //for (String tag : gameToIRCTags) {
+               //plugin.getCraftIRC().//.sendMessageToTag(ircMsg, tag);
+            //}
+        //}
     }
 
     public void addPlayer(String name) {

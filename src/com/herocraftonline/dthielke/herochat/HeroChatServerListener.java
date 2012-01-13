@@ -16,10 +16,10 @@ public class HeroChatServerListener extends ServerListener {
         Plugin plugin = event.getPlugin();
         String name = plugin.getDescription().getName();
         
-        if (name.equals("Permissions")) {
+        if (name.equals("bPermissions")) {
             this.plugin.loadPermissions();
         } else if (name.equals("CraftIRC")) {
-            this.plugin.loadCraftIRC();
+            //this.plugin.loadCraftIRC();
         } else if (name.equals("Multiverse-Core")) {
             this.plugin.loadMultiverse();
         } else if (name.equals("iChat")) {

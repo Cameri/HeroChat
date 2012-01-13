@@ -10,14 +10,17 @@ package com.herocraftonline.dthielke.herochat.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.util.config.Configuration;
 
 import com.herocraftonline.dthielke.herochat.HeroChat;
 import com.herocraftonline.dthielke.herochat.HeroChat.ChatColor;
@@ -43,9 +46,9 @@ public class ConfigManager {
 
     public void load() throws Exception {
         checkConfig();
-
-        Configuration config = new Configuration(primaryConfigFile);
-        config.load();
+        YamlConfiguration config = new YamlConfiguration();//primaryConfigFile);
+        create(primaryConfigFile);
+        config.load(primaryConfigFile);
         loadChannels(config);
         loadGlobals(config);
     }
@@ -73,7 +76,7 @@ public class ConfigManager {
         }
     }
 
-    private void loadGlobals(Configuration config) {
+    private void loadGlobals(YamlConfiguration config) {
         String globals = "globals.";
         ChannelManager cm = plugin.getChannelManager();
         String pluginTag = config.getString(globals + "plugin-tag", "[HeroChat] ").replace("&", "§");
@@ -83,7 +86,7 @@ public class ConfigManager {
         String defaultMsgFormat = config.getString(globals + "default-message-format", "{player}: ");
         String incomingTellFormat = config.getString(globals + "incoming-tell-format", "{prefix}{player} &8->&d ");
         String outgoingTellFormat = config.getString(globals + "outgoing-tell-format", "{prefix}{player} &8->&d "); 
-        List<String> censors = config.getStringList(globals + "censors", null);
+        List<String> censors = config.getStringList(globals + "censors");
         boolean separateChatLog = config.getBoolean(globals + "separate-chat-log", false);
 
         plugin.setTag(pluginTag);
@@ -97,9 +100,11 @@ public class ConfigManager {
         plugin.setSeparateChatLog(separateChatLog);
     }
 
-    private void loadChannels(Configuration config) {
+    private void loadChannels(YamlConfiguration config) {
         List<Channel> list = new ArrayList<Channel>();
-        for (String s : config.getKeys("channels")) {
+        ConfigurationSection channels = config.getConfigurationSection("channels");
+        Set<String> keys = channels.getKeys(false);
+        for (String s : keys) {
             String root = "channels." + s + ".";
             Channel c;
             if (config.getBoolean(root + "options.local", false)) {
@@ -114,11 +119,11 @@ public class ConfigManager {
             c.setPassword(config.getString(root + "password", ""));
             c.setColor(ChatColor.valueOf(config.getString(root + "color", "WHITE")));
             c.setMsgFormat(config.getString(root + "message-format", "{default}"));
-            c.setWorlds(config.getStringList(root + "worlds", null));
+            c.setWorlds(config.getStringList(root + "worlds"));
             
             String craftIRC = root + "craftIRC.";
-            c.setIRCToGameTags(config.getStringList(craftIRC + "IRC-to-game", null));
-            c.setGameToIRCTags(config.getStringList(craftIRC + "game-to-IRC", null));
+            c.setIRCToGameTags(config.getStringList(craftIRC + "IRC-to-game"));
+            c.setGameToIRCTags(config.getStringList(craftIRC + "game-to-IRC"));
 
             String options = root + "options.";
             c.setVerbose(config.getBoolean(options + "join-messages", true));
@@ -129,12 +134,12 @@ public class ConfigManager {
             c.setCrossWorld(config.getBoolean(options + "cross-world-chat", true));
 
             String lists = root + "lists.";
-            c.setBlacklist(config.getStringList(lists + "bans", null));
-            c.setModerators(config.getStringList(lists + "moderators", null));
+            c.setBlacklist(config.getStringList(lists + "bans"));
+            c.setModerators(config.getStringList(lists + "moderators"));
 
             String permissions = root + "permissions.";
-            c.setWhitelist(config.getStringList(permissions + "join", null));
-            c.setVoicelist(config.getStringList(permissions + "speak", null));
+            c.setWhitelist(config.getStringList(permissions + "join"));
+            c.setVoicelist(config.getStringList(permissions + "speak"));
 
             list.add(c);
         }
@@ -144,8 +149,9 @@ public class ConfigManager {
     public void loadPlayer(String name) {
         File userConfigFile = new File(usersConfigFolder, name + ".yml");
         try {
-            Configuration config = new Configuration(userConfigFile);
-            config.load();
+            YamlConfiguration config = new YamlConfiguration();
+            create(userConfigFile);
+            config.load(userConfigFile);
             ChannelManager channelManager = plugin.getChannelManager();
             try {
                 String activeChannelName = config.getString("active-channel", channelManager.getDefaultChannel().getName());
@@ -156,7 +162,7 @@ public class ConfigManager {
                     channelManager.setActiveChannel(name, channelManager.getDefaultChannel().getName());
                 }
 
-                List<String> joinedChannels = config.getStringList("joined-channels", null);
+                List<String> joinedChannels = config.getStringList("joined-channels");
                 if (joinedChannels.isEmpty()) {
                     channelManager.joinAutoChannels(name);
                 } else {
@@ -185,70 +191,74 @@ public class ConfigManager {
     }
 
     public void save() throws Exception {
-        Configuration config = new Configuration(primaryConfigFile);
+        YamlConfiguration config = new YamlConfiguration();
+        create(primaryConfigFile);
+        config.load(primaryConfigFile);
         saveGlobals(config);
         saveChannels(config);
-        config.save();
+        config.save(primaryConfigFile);
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             savePlayer(player.getName());
         }
     }
 
-    private void saveGlobals(Configuration config) throws Exception {
+    private void saveGlobals(YamlConfiguration config) throws Exception {
         ChannelManager cm = plugin.getChannelManager();
         String globals = "globals.";
-        config.setProperty(globals + "plugin-tag", plugin.getTag());
-        config.setProperty(globals + "craftIRC-prefix", plugin.getIrcTag());
-        config.setProperty(globals + "craftIRC-message-format", plugin.getIrcMessageFormat());
-        config.setProperty(globals + "incoming-tell-format", plugin.getIncomingTellFormat());
-        config.setProperty(globals + "outgoing-tell-format", plugin.getOutgoingTellFormat());
-        config.setProperty(globals + "default-channel", cm.getDefaultChannel().getName());
-        config.setProperty(globals + "default-message-format", cm.getDefaultMsgFormat());
-        config.setProperty(globals + "censors", plugin.getCensors());
-        config.setProperty(globals + "separate-chat-log", plugin.hasSeparateChatLog());
+        config.set(globals + "plugin-tag", plugin.getTag());
+        config.set(globals + "craftIRC-prefix", plugin.getIrcTag());
+        config.set(globals + "craftIRC-message-format", plugin.getIrcMessageFormat());
+        config.set(globals + "incoming-tell-format", plugin.getIncomingTellFormat());
+        config.set(globals + "outgoing-tell-format", plugin.getOutgoingTellFormat());
+        config.set(globals + "default-channel", cm.getDefaultChannel().getName());
+        config.set(globals + "default-message-format", cm.getDefaultMsgFormat());
+        config.set(globals + "censors", plugin.getCensors());
+        config.set(globals + "separate-chat-log", plugin.hasSeparateChatLog());
     }
 
-    private void saveChannels(Configuration config) throws Exception {
+    private void saveChannels(YamlConfiguration config) throws Exception {
         Channel[] channels = plugin.getChannelManager().getChannels().toArray(new Channel[0]);
         for (Channel c : channels) {
             String root = "channels." + c.getName() + ".";
-            config.setProperty(root + "nickname", c.getNick());
-            config.setProperty(root + "password", c.getPassword());
-            config.setProperty(root + "color", c.getColor().toString());
-            config.setProperty(root + "message-format", c.getMsgFormat());
-            config.setProperty(root + "worlds", c.getWorlds());
+            config.set(root + "nickname", c.getNick());
+            config.set(root + "password", c.getPassword());
+            config.set(root + "color", c.getColor().toString());
+            config.set(root + "message-format", c.getMsgFormat());
+            config.set(root + "worlds", c.getWorlds());
             if (c instanceof LocalChannel) {
-                config.setProperty(root + "local-distance", ((LocalChannel) c).getDistance());
+                config.set(root + "local-distance", ((LocalChannel) c).getDistance());
             }
             
             String craftIRC = root + "craftIRC.";
-            config.setProperty(craftIRC + "IRC-to-game", c.getIRCToGameTags());
-            config.setProperty(craftIRC + "game-to-IRC", c.getGameToIRCTags());
+            config.set(craftIRC + "IRC-to-game", c.getIRCToGameTags());
+            config.set(craftIRC + "game-to-IRC", c.getGameToIRCTags());
 
             String options = root + "options.";
-            config.setProperty(options + "join-messages", c.isVerbose());
-            config.setProperty(options + "shortcut-allowed", c.isQuickMessagable());
-            config.setProperty(options + "hidden", c.isHidden());
-            config.setProperty(options + "auto-join", c.isAutoJoined());
-            config.setProperty(options + "local", c instanceof LocalChannel);
-            config.setProperty(options + "forced", c.isForced());
-            config.setProperty(options + "cross-world-chat", c.isCrossWorld());
+            config.set(options + "join-messages", c.isVerbose());
+            config.set(options + "shortcut-allowed", c.isQuickMessagable());
+            config.set(options + "hidden", c.isHidden());
+            config.set(options + "auto-join", c.isAutoJoined());
+            config.set(options + "local", c instanceof LocalChannel);
+            config.set(options + "forced", c.isForced());
+            config.set(options + "cross-world-chat", c.isCrossWorld());
 
             String lists = root + "lists.";
-            config.setProperty(lists + "bans", c.getBlacklist());
-            config.setProperty(lists + "moderators", c.getModerators());
+            config.set(lists + "bans", c.getBlacklist());
+            config.set(lists + "moderators", c.getModerators());
 
             String permissions = root + "permissions.";
-            config.setProperty(permissions + "join", c.getWhitelist());
-            config.setProperty(permissions + "speak", c.getVoicelist());
+            config.set(permissions + "join", c.getWhitelist());
+            config.set(permissions + "speak", c.getVoicelist());
         }
     }
 
     public void savePlayer(String name) {
         File userConfigFile = new File(usersConfigFolder, name + ".yml");
         try {
-            Configuration config = new Configuration(userConfigFile);
+            YamlConfiguration config = new YamlConfiguration();
+            create(userConfigFile);
+            config.load(userConfigFile);
             ChannelManager configManager = plugin.getChannelManager();
             Channel active = configManager.getActiveChannel(name);
             List<Channel> joinedChannels = configManager.getJoinedChannels(name);
@@ -256,11 +266,22 @@ public class ConfigManager {
             for (Channel channel : joinedChannels) {
                 joinedChannelNames.add(channel.getName());
             }
-            config.setProperty("active-channel", active.getName());
-            config.setProperty("joined-channels", joinedChannelNames);
-            config.save();
+            config.set("active-channel", active.getName());
+            config.set("joined-channels", joinedChannelNames);
+            config.save(userConfigFile);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    
+    public void create(File file) {
+    	if(!file.exists()) {
+    		try {
+    			file.getParentFile().mkdirs();
+				file.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
     }
 }

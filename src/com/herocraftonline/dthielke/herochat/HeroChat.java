@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
+//import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -30,7 +30,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.ensifera.animosity.craftirc.CraftIRC;
+//import com.ensifera.animosity.craftirc.CraftIRC;
 import com.herocraftonline.dthielke.herochat.channels.Channel;
 import com.herocraftonline.dthielke.herochat.channels.ChannelManager;
 import com.herocraftonline.dthielke.herochat.channels.ConversationManager;
@@ -55,8 +55,6 @@ import com.herocraftonline.dthielke.herochat.command.commands.ToggleCommand;
 import com.herocraftonline.dthielke.herochat.command.commands.WhoCommand;
 import com.herocraftonline.dthielke.herochat.util.ConfigManager;
 import com.herocraftonline.dthielke.herochat.util.PermissionManager;
-import com.nijiko.permissions.PermissionHandler;
-import com.nijikokun.bukkit.Permissions.Permissions;
 import com.onarandombox.MultiverseCore.MultiverseCore;
 
 public class HeroChat extends JavaPlugin {
@@ -94,7 +92,7 @@ public class HeroChat extends JavaPlugin {
     private ConversationManager conversationManager;
     private ConfigManager configManager;
     private PermissionManager permissionManager;
-    private CraftIRC craftIRC;
+    //private CraftIRC craftIRC;
     private String ircMessageFormat;
     private String ircTag;
     private String tag;
@@ -103,7 +101,7 @@ public class HeroChat extends JavaPlugin {
     private List<String> censors;
     private HeroChatServerListener serverListener;
     private HeroChatPlayerListener playerListener;
-    private HeroChatCraftIRCListener craftIRCListener;
+    //private HeroChatCraftIRCListener craftIRCListener;
     private boolean eventsRegistered = false;
     private static MultiverseCore multiverseCore = null;
 
@@ -125,7 +123,9 @@ public class HeroChat extends JavaPlugin {
     public void onEnable() {
         channelManager = new ChannelManager(this);
         conversationManager = new ConversationManager();
-        permissionManager = new PermissionManager(null);
+        permissionManager = new PermissionManager();
+        // And for superperms
+        permissionManager.registerPermissions(this);
         registerEvents();
         registerCommands();
 
@@ -160,7 +160,7 @@ public class HeroChat extends JavaPlugin {
         log(Level.INFO, desc.getName() + " version " + desc.getVersion() + " enabled.");
 
         loadPermissions();
-        loadCraftIRC();
+        //loadCraftIRC();
         loadMultiverse();
         checkConflict("iChat");
         checkConflict("EssentialsChat");
@@ -211,14 +211,10 @@ public class HeroChat extends JavaPlugin {
     }
 
     public void loadPermissions() {
-        Plugin plugin = this.getServer().getPluginManager().getPlugin("Permissions");
+        Plugin plugin = this.getServer().getPluginManager().getPlugin("bPermissions");
         if (plugin != null) {
             if (plugin.isEnabled()) {
-                Permissions permissions = (Permissions) plugin;
-                PermissionHandler security = permissions.getHandler();
-                PermissionManager ph = new PermissionManager(security);
-                this.permissionManager = ph;
-                log(Level.INFO, "Permissions " + permissions.getDescription().getVersion() + " found.");
+                log(Level.INFO, "bPermissions " + plugin.getDescription().getVersion() + " found.");
 
                 for (Player player : getServer().getOnlinePlayers()) {
                     String name = player.getName();
@@ -232,7 +228,8 @@ public class HeroChat extends JavaPlugin {
             }
         }
     }
-
+    
+    /*
     public void loadCraftIRC() {
         Plugin plugin = this.getServer().getPluginManager().getPlugin("CraftIRC");
         if (plugin != null) {
@@ -251,6 +248,7 @@ public class HeroChat extends JavaPlugin {
             }
         }
     }
+    */
 
     public void loadMultiverse() {
         Plugin plugin = this.getServer().getPluginManager().getPlugin("Multiverse-Core");
@@ -330,11 +328,11 @@ public class HeroChat extends JavaPlugin {
     public ConfigManager getConfigManager() {
         return configManager;
     }
-
+    /*
     public CraftIRC getCraftIRC() {
         return craftIRC == null ? null : craftIRC;
     }
-
+	*/
     public void setIrcTag(String ircTag) {
         this.ircTag = ircTag;
     }

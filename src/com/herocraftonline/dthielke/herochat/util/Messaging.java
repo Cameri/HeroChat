@@ -20,7 +20,6 @@ import org.bukkit.entity.Player;
 import com.herocraftonline.dthielke.herochat.HeroChat;
 import com.herocraftonline.dthielke.herochat.HeroChat.ChatColor;
 import com.herocraftonline.dthielke.herochat.channels.Channel;
-import com.onarandombox.MultiverseCore.MVWorld;
 
 public class Messaging {
     private static final String[] HEALTH_COLORS = { "§0", "§4", "§6", "§e", "§2" };
